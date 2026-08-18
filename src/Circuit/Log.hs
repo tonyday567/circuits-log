@@ -40,7 +40,7 @@ import System.Directory (createDirectoryIfMissing, doesFileExist)
 import System.FilePath (takeDirectory)
 
 -- | Configuration for a log file.
-data LogConfig = LogConfig
+newtype LogConfig = LogConfig
   { -- | Path to the JSONL log file.
     logPath :: FilePath
   }
