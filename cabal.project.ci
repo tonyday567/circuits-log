@@ -1,0 +1,4 @@
+packages:
+  circuits-log.cabal
+
+write-ghc-environment-files: always
