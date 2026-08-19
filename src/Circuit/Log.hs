@@ -21,17 +21,9 @@ module Circuit.Log
   )
 where
 
-import Data.Aeson
-  ( FromJSON (parseJSON),
-    ToJSON (toJSON),
-    eitherDecodeStrict,
-    encode,
-    object,
-    withObject,
-    (.:),
-    (.=),
-  )
+import Circuit.Parser.Json (Json (..), decodeJson, encodeJson)
 import Data.ByteString.Lazy qualified as BL
+import Data.Scientific (toBoundedInteger)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Encoding (decodeUtf8, decodeUtf8', encodeUtf8)
@@ -67,20 +59,36 @@ data LogEntry = LogEntry
   }
   deriving (Show)
 
-instance FromJSON LogEntry where
-  parseJSON = withObject "LogEntry" $ \v ->
-    LogEntry
-      <$> v .: "id"
-      <*> v .: "ts"
-      <*> v .: "body"
+entryToJson :: LogEntry -> Json
+entryToJson e =
+  JObject
+    [ ("id", JNumber (fromIntegral (entryId e))),
+      ("ts", JString (entryTs e)),
+      ("body", JString (entryBody e))
+    ]
 
-instance ToJSON LogEntry where
-  toJSON e =
-    object
-      [ "id" .= entryId e,
-        "ts" .= entryTs e,
-        "body" .= entryBody e
-      ]
+entryFromJson :: Json -> Either String LogEntry
+entryFromJson (JObject pairs) = do
+  i <- lookupField "id" pairs >>= asInt
+  t <- lookupField "ts" pairs >>= asText
+  b <- lookupField "body" pairs >>= asText
+  pure (LogEntry i t b)
+entryFromJson _ = Left "log entry must be a JSON object"
+
+lookupField :: Text -> [(Text, Json)] -> Either String Json
+lookupField key pairs = case lookup key pairs of
+  Just v -> Right v
+  Nothing -> Left ("missing field: " <> T.unpack key)
+
+asInt :: Json -> Either String Int
+asInt (JNumber n) = case toBoundedInteger n of
+  Just i -> Right i
+  Nothing -> Left ("id out of int range: " <> show n)
+asInt _ = Left "id must be a number"
+
+asText :: Json -> Either String Text
+asText (JString t) = Right t
+asText _ = Left "timestamp and body must be strings"
 
 -- | Format a UTC time as @YYYY-MM-DDTHH:MM:SSZ@.
 formatUtc :: UTCTime -> Text
@@ -110,9 +118,9 @@ readLogEither cfg = do
         Right text -> pure (parseLine <$> filter (not . T.null) (T.lines text))
   where
     parseLine line =
-      case eitherDecodeStrict (encodeUtf8 line) of
+      case decodeJson (encodeUtf8 line) of
         Left err -> Left ("parse error: " <> err)
-        Right entry -> Right entry
+        Right j -> entryFromJson j
 
 -- | Next id for a log: one greater than the maximum existing id, or 1.
 nextId :: [LogEntry] -> Int
@@ -123,7 +131,7 @@ nextId entries =
 
 -- | Render one entry as a single JSONL line.
 renderEntry :: LogEntry -> Text
-renderEntry = decodeUtf8 . BL.toStrict . encode
+renderEntry = decodeUtf8 . encodeJson . entryToJson
 
 -- | Append a new entry with the given body to the log.
 appendEntry :: LogConfig -> Text -> IO ()

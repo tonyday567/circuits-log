@@ -75,12 +75,13 @@ library
     Circuit.Log
 
   build-depends:
-    aeson >=2.0 && <2.3,
-    base >=4.18 && <5,
-    bytestring >=0.11 && <0.13,
+    base >=4.20 && <5,
+    bytestring >=0.12.2 && <0.13,
+    circuits-parser >=0.1 && <0.2,
     directory >=1.3 && <1.4,
     filepath >=1.4 && <1.6,
-    text >=1.2 && <2.2,
+    scientific >=0.3 && <0.4,
+    text >=2.1.3 && <2.2,
     time >=1.12 && <1.15,
 
 executable stamp-card
