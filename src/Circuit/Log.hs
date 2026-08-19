@@ -17,6 +17,7 @@ module Circuit.Log
     nextId,
     renderEntry,
     appendEntry,
+    formatUtc,
   )
 where
 
@@ -36,6 +37,7 @@ import Data.Text qualified as T
 import Data.Text.Encoding (decodeUtf8, decodeUtf8', encodeUtf8)
 import Data.Text.IO qualified as TIO
 import Data.Time.Clock (UTCTime, getCurrentTime)
+import Data.Time.Format (defaultTimeLocale, formatTime)
 import System.Directory (createDirectoryIfMissing, doesFileExist)
 import System.FilePath (takeDirectory)
 
@@ -58,7 +60,9 @@ defaultLogConfig =
 -- | One log entry: envelope only.
 data LogEntry = LogEntry
   { entryId :: Int,
-    entryTs :: UTCTime,
+    -- | ISO-8601 timestamp stored as text so legacy offsets (e.g.
+    -- @+10:00@) and clean UTC stamps (e.g. @Z@) coexist.
+    entryTs :: Text,
     entryBody :: Text
   }
   deriving (Show)
@@ -77,6 +81,10 @@ instance ToJSON LogEntry where
         "ts" .= entryTs e,
         "body" .= entryBody e
       ]
+
+-- | Format a UTC time as @YYYY-MM-DDTHH:MM:SSZ@.
+formatUtc :: UTCTime -> Text
+formatUtc = T.pack . formatTime defaultTimeLocale "%FT%TZ"
 
 -- | Read all entries from the log.
 --
@@ -122,7 +130,7 @@ appendEntry :: LogConfig -> Text -> IO ()
 appendEntry cfg body = do
   entries <- readLog cfg
   now <- getCurrentTime
-  let entry = LogEntry (nextId entries) now body
+  let entry = LogEntry (nextId entries) (formatUtc now) body
       line = renderEntry entry <> "\n"
   createDirectoryIfMissing True (takeDirectory (logPath cfg))
   TIO.appendFile (logPath cfg) line

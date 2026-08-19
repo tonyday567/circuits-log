@@ -16,6 +16,7 @@ import Circuit.Log
     LogEntry (..),
     appendEntry,
     defaultLogConfig,
+    formatUtc,
     nextId,
     readLog,
     renderEntry,
@@ -96,7 +97,7 @@ run (Preview path cfg) = do
   body <- TIO.readFile path
   entries <- readLog cfg
   now <- getCurrentTime
-  TIO.putStrLn (renderEntry (LogEntry (nextId entries) now body))
+  TIO.putStrLn (renderEntry (LogEntry (nextId entries) (formatUtc now) body))
 run (Append path cfg) = do
   body <- TIO.readFile path
   appendEntry cfg body
