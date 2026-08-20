@@ -81,8 +81,8 @@ library
     directory >=1.3 && <1.4,
     filepath >=1.4 && <1.6,
     scientific >=0.3 && <0.4,
-    text >=2.0 && <2.2,
-    time >=1.12 && <1.15,
+    text >=1.2 && <2.2,
+    time >=1.9 && <1.15,
 
 executable stamp-card
   import: ghc-options-stanza
@@ -90,8 +90,8 @@ executable stamp-card
   hs-source-dirs: app
   main-is: stamp-card.hs
   build-depends:
-    base >=4.18 && <5,
+    base >=4.20 && <5,
     circuits-log,
-    optparse-applicative >=0.18 && <0.20,
+    optparse-applicative >=0.17 && <0.20,
     text >=1.2 && <2.2,
-    time >=1.12 && <1.15,
+    time >=1.9 && <1.15,
