@@ -15,11 +15,11 @@ description:
   carrying an id, timestamp, and a body string. The body is expected to be a
   markdown file with optional YAML frontmatter. Tools are provided for reading,
   rendering, and appending entries.
-
 build-type: Simple
 tested-with:
+  ghc ==9.10.1
+  ghc ==9.12.2
   ghc ==9.14.1
-
 extra-doc-files:
   ChangeLog.md
   readme.md
@@ -39,37 +39,9 @@ common ghc-options-stanza
     -Wpartial-fields
     -Wredundant-constraints
 
-common ghc-options-exe-stanza
-  ghc-options:
-    -fforce-recomp
-    -funbox-strict-fields
-    -rtsopts
-    -threaded
-    -with-rtsopts=-N
-
-common ghc2024-additions
-  default-extensions:
-    DataKinds
-    DerivingStrategies
-    DisambiguateRecordFields
-    ExplicitNamespaces
-    GADTs
-    LambdaCase
-    MonoLocalBinds
-    RoleAnnotations
-
-common ghc2024-stanza
-  if impl(ghc >=9.10)
-    default-language:
-      GHC2024
-  else
-    import: ghc2024-additions
-    default-language:
-      GHC2021
-
 library
   import: ghc-options-stanza
-  import: ghc2024-stanza
+  default-language: GHC2024
   hs-source-dirs: src
   exposed-modules:
     Circuit.Log
@@ -86,7 +58,7 @@ library
 
 executable stamp-card
   import: ghc-options-stanza
-  import: ghc2024-stanza
+  default-language: GHC2024
   hs-source-dirs: app
   main-is: stamp-card.hs
   build-depends:
